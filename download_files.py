@@ -19,6 +19,9 @@ import aiofiles
 from tqdm import tqdm
 from modules.download_pdf import download_pdf
 from modules.download_byte import download_byte
+import ssl
+import certifi
+from aiohttp.cookiejar import CookieJar
 
 
 ###!!NB!! column with URL's should be called: "Report Html Address" and the year should be in column named: "Pub_Year"
@@ -28,7 +31,9 @@ from modules.download_byte import download_byte
 ########## EDIT HERE:
     
 ### specify path to file containing the URLs
-list_pth = 'C:\\Users\\A-SPAC05\\Desktop\\Projects\\Week4\\PDF_Downloader\\Data\\GRI_2017_2020.xlsx'
+# list_pth = 'C:\\Users\\A-SPAC05\\Desktop\\Projects\\Week4\\PDF_Downloader\\Data\\GRI_2017_2020.xlsx'
+list_pth = 'C:\\Users\\A-SPAC05\\Desktop\\Projects\\Week4\\PDF_Downloader\\Data\\Copy of GRI_2017_2020_Short.xlsx'
+
 
 ###specify Output folder (in this case it moves one folder up and saves in the script output folder)
 pth = 'C:\\Users\\A-SPAC05\\Desktop\\Projects\\Week4\\PDF_Downloader\\Output\\'
@@ -67,9 +72,13 @@ async def main():
     ### filter out rows that have been downloaded
     df = df[~df.index.isin(exist)]
 
+    df = df[df["Pdf_URL"].apply(lambda x: isinstance(x, str)) | df["Report Html Address"].apply(lambda x: isinstance(x, str))]
 
+    #ssl_context = ssl.create_default_context(cafile=certifi.where(), purpose=ssl.Purpose.SERVER_AUTH)
+
+#cookie_jar=CookieJar(),
     connector = aiohttp.TCPConnector()
-    async with aiohttp.ClientSession(connector=connector) as session:
+    async with aiohttp.ClientSession(connector=connector,  timeout=aiohttp.ClientTimeout(total=10)) as session:
         tasks = [download_task(session, pth, df, j) for j in df.index]
         for future in tqdm(asyncio.as_completed(tasks), total=len(tasks)):
             try:
@@ -77,11 +86,8 @@ async def main():
                 if result is not None:
                     with open(pth+'download_results.csv', 'a') as f:
                         f.write(f"{j},{result}\n")
-                #print(f"{downloads} Downloaded {future}")
-                
-            except Exception as e:
+            except:
                 pass
-                #print(f"Error downloading {future}: {e}")
 
 
 
