@@ -21,6 +21,8 @@ The requirements need to be installed:
 pip install -r requirements.txt
 ```
 
+In file ```download_files.py``` three paths need to be changed.
+
 ### Executing program
 
 * How to run the program
