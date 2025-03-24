@@ -55,7 +55,16 @@ ID = "BRnum"
 async def read_excel(file_path, index_col):
     async with aiofiles.open(file_path, mode='rb') as f:
         content = await f.read()
-    return pd.read_excel(content, sheet_name=0, index_col=index_col)
+
+        # Read the excel file
+        df = pd.read_excel(content, sheet_name=0, index_col=index_col)
+
+        # filter out rows that have been downloaded
+        df = df[~df.index.isin(exist)]
+
+        # Filter out rows that do not have a URL
+        df = df[df["Pdf_URL"].apply(lambda x: isinstance(x, str)) | df["Report Html Address"].apply(lambda x: isinstance(x, str))]
+    return df
 
 
 
@@ -67,14 +76,9 @@ async def download_task(session, pth, df, j):
 
 async def main():
     # read in file
-    df = pd.read_excel(list_pth, sheet_name=0, index_col=ID)
+    df = read_excel(list_pth, index_col=ID)
 
-    # filter out rows that have been downloaded
-    df = df[~df.index.isin(exist)]
-
-    # Filter out rows that do not have a URL
-    df = df[df["Pdf_URL"].apply(lambda x: isinstance(x, str)) | df["Report Html Address"].apply(lambda x: isinstance(x, str))]
-
+    # Create a context for the SSL certificate
     ssl_context = ssl.create_default_context(cafile=certifi.where(), purpose=ssl.Purpose.SERVER_AUTH)
 
     # Settings for the aiohttp Client session
