@@ -76,14 +76,14 @@ async def download_task(session, pth, df, j):
 
 async def main():
     # read in file
-    df = read_excel(list_pth, index_col=ID)
+    df = await read_excel(list_pth, index_col=ID)
 
     # Create a context for the SSL certificate
     ssl_context = ssl.create_default_context(cafile=certifi.where(), purpose=ssl.Purpose.SERVER_AUTH)
 
     # Settings for the aiohttp Client session
-    connector = aiohttp.TCPConnector(ssl=ssl_context, limit=100, force_close=True, enable_cleanup_closed=True, cookie_jar=CookieJar())
-    async with aiohttp.ClientSession(connector=connector,  timeout=aiohttp.ClientTimeout(total=10)) as session:
+    connector = aiohttp.TCPConnector(ssl=ssl_context, limit=100, force_close=True, enable_cleanup_closed=True)
+    async with aiohttp.ClientSession(connector=connector,  timeout=aiohttp.ClientTimeout(total=10), cookie_jar=CookieJar()) as session:
         # Queue up the tasks in the event loop
         tasks = [download_task(session, pth, df, j) for j in df.index]
 
